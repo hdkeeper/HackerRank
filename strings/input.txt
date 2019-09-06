@@ -1,2 +1,6 @@
-cde
-abc
+5
+AAAA
+BBBBB
+ABABABAB
+BABABA
+AAABBB
