@@ -9,12 +9,11 @@ import sys
 # Complete the alternatingCharacters function below.
 def alternatingCharacters(s):
     count = 0
-    new_s = re.sub(r'(\w)\1', r'\1', s, count=1)
-
-    while s != new_s:
-        count += 1
-        s = new_s
-        new_s = re.sub(r'(\w)\1', r'\1', s, count=1)
+    i = 0
+    while i < len(s)-1:
+        if s[i] == s[i+1]:
+            count += 1
+        i += 1
 
     return count
     
