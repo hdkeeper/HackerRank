@@ -7,7 +7,7 @@ import re
 import sys
 from functools import cmp_to_key
 
-class Contest:
+class Contest(object):
     def __init__(self, luck, isImp):
         self.luck = luck
         self.isImp = isImp
