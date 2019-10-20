@@ -1,9 +1,4 @@
-from fractions import Fraction
+import calendar
 
-a = Fraction(1, 3)
-b = Fraction(2, 7)
-c = a + b
-print(c)
-
-d = Fraction(1, 0)
-
+month, day, year = list(map(int, input().split()))
+print(calendar.day_name[calendar.weekday(year, month, day)].upper())
