@@ -5,86 +5,64 @@ import os
 import random
 import re
 import sys
-from collections import namedtuple
+from collections import namedtuple, deque
 
 Point = namedtuple('Point', 'x y')
 
-DIRECTIONS = [
-    # (+x, +y)
-    Point(0, -1),   # вверх
-    Point(0, 1),    # вниз
-    Point(-1, 0),   # влево
-    Point(1, 0)     # вправо   
-]
+def getPointsFromPoint(N, arr, point):
+    x = point.x
+    y = point.y
+    points = []
 
-def printGrid(grid):
-    for row in grid:
-        print(''.join(row))
-
-moves = []
-
-# Complete the minimumMoves function below.
-def minimumMoves(grid, startX, startY, goalX, goalY, stepCount=0):
-    def isOpen(x, y):
-        return (y >= 0 and y < len(grid) and
-            x >= 0 and x < len(grid[y]) and
-            grid[y][x] == '.')
-
-    def setGrid(x, y, ch):
-        grid[y][x] = ch
-
-
-    printGrid(grid)
-    curX, curY = startX, startY
-    setGrid(curX, curY, '+')
-
-    # Выбрать направление для следующего хода
-    for dir in DIRECTIONS:
-        moveLen = 1
-        nextX = curX + dir.x
-        nextY = curY + dir.y
-
-        # Проверить соседнюю клетку
-        if isOpen(nextX, nextY):
-            setGrid(nextX, nextY, '+')
-            # Продлить ход на максимальное количество клеток
-            while isOpen(nextX + dir.x, nextY + dir.y):
-                moveLen += 1
-                nextX += dir.x
-                nextY += dir.y
-                setGrid(nextX, nextY, '+')
-                # Проверить, добрались ли мы до места
-                if nextX == goalX and nextY == goalY:
-                    return stepCount + 1
-
-            # Записать ход
-            moves.append(Point(nextX, nextY))
-            print(nextX, nextY)
-
-            printGrid(grid)
-            subResult = minimumMoves(grid, nextX, nextY, goalX, goalY, stepCount+1)
-            if subResult < 0:
-                # Ничего не нашли, отмотать один ход
-                moves.pop()
-                # Убрать отметки последнего хода с грида
-                while moveLen > 0:
-                    setGrid(nextX, nextY, '.')
-                    nextX -= dir.x
-                    nextY -= dir.y
-                    moveLen -= 1
-            else:
-                return subResult
-            
-    # Ходов больше нет
-    return (-1)
+    while x > 0:
+        x -= 1
+        if arr[x][y] == 'X':
+            break
+        points.append(Point(x,y))
+     
+    x = point.x
+    while x < N-1: 
+        x += 1
+        if arr[x][y] == 'X': 
+            break
+        points.append(Point(x,y)) 
+     
+    x = point.x 
+    while y > 0:
+        y -= 1
+        if arr[x][y] == 'X':
+            break
+        points.append(Point(x,y))
+     
+    y = point.y
+    while y < N-1:
+        y += 1
+        if arr[x][y] == 'X':
+            break
+        points.append(Point(x,y))
+         
+    return points
 
 
-
-
+def solveCastleGrid(N, arr, start, end):
+    q = deque([start])
+    arr[start.x][start.y] = 0
+     
+    while q:
+        current_point = q.pop()
+        current_distance = arr[current_point.x][current_point.y]
+         
+        points = getPointsFromPoint(N, arr, current_point)
+        for p in points:
+            if arr[p.x][p.y] == '.':
+                arr[p.x][p.y] = current_distance + 1
+                q.appendleft(p)
+                if p.x == end.x and p.y == end.y:
+                    return current_distance + 1
+    return -1
 
 
 if __name__ == '__main__':
-    '''    
     n = int(input())
     grid = []
     for _ in range(n):
@@ -96,17 +74,5 @@ if __name__ == '__main__':
     startY = int(startXStartY[1])
     goalX = int(startXStartY[2])
     goalY = int(startXStartY[3])
-    result = minimumMoves(grid, startX, startY, goalX, goalY)
-    print(str(result))
-    '''
-
-    # Debug mock
-    grid = [
-        list('.X.'),
-        list('.X.'),
-        list('...')
-    ]
-    startX, startY = 0, 0
-    goalX, goalY = 0, 2
-    result = minimumMoves(grid, startX, startY, goalX, goalY)
+    result = solveCastleGrid(n, grid, Point(startX, startY), Point(goalX, goalY))
     print(str(result))
