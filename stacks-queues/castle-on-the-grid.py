@@ -53,19 +53,27 @@ def minimumMoves(grid, startX, startY, goalX, goalY, stepCount=0):
                 nextX += dir.x
                 nextY += dir.y
                 setGrid(nextX, nextY, '+')
+                # Проверить, добрались ли мы до места
+                if nextX == goalX and nextY == goalY:
+                    return stepCount + 1
 
             # Записать ход
             moves.append(Point(nextX, nextY))
             print(nextX, nextY)
 
-            printGrid(grid)  
+            printGrid(grid)
             subResult = minimumMoves(grid, nextX, nextY, goalX, goalY, stepCount+1)
             if subResult < 0:
                 # Ничего не нашли, отмотать один ход
                 moves.pop()
-                # TODO Убрать отметки с грида
-
-
+                # Убрать отметки последнего хода с грида
+                while moveLen > 0:
+                    setGrid(nextX, nextY, '.')
+                    nextX -= dir.x
+                    nextY -= dir.y
+                    moveLen -= 1
+            else:
+                return subResult
             
     # Ходов больше нет
     return (-1)
@@ -76,10 +84,9 @@ def minimumMoves(grid, startX, startY, goalX, goalY, stepCount=0):
 
 
 if __name__ == '__main__':
-    fptr = open(os.environ['OUTPUT_PATH'], 'w')
+    '''    
     n = int(input())
     grid = []
-
     for _ in range(n):
         grid_item = list(input())
         grid.append(grid_item)
@@ -90,5 +97,16 @@ if __name__ == '__main__':
     goalX = int(startXStartY[2])
     goalY = int(startXStartY[3])
     result = minimumMoves(grid, startX, startY, goalX, goalY)
-    fptr.write(str(result) + '\n')
-    fptr.close()
+    print(str(result))
+    '''
+
+    # Debug mock
+    grid = [
+        list('.X.'),
+        list('.X.'),
+        list('...')
+    ]
+    startX, startY = 0, 0
+    goalX, goalY = 0, 2
+    result = minimumMoves(grid, startX, startY, goalX, goalY)
+    print(str(result))
