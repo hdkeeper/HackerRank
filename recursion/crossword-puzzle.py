@@ -25,6 +25,12 @@ class WordSlot:
     def __eq__(self, other):
         return (self.row == other.row) and (self.col == other.col) and (self.dir == other.dir)
 
+    def inside(self, row, col):
+        if self.dir == 'H': # Horiz
+            return (row == self.row) and (self.col <= col) and (col < self.col+self.len)
+        else: # Vert
+            return (col == self.col) and (self.row <= row) and (row < self.row+self.len)
+
 
 class State:
     def __init__(self):
@@ -100,80 +106,63 @@ class State:
 
 def findWordSlots(st):
     slots = []
-    # TODO Переделать алгоритм
+    for irow in range(len(st.matrix)):
+        for icol in range(len(st.matrix[irow])):
+            if st.charAt(irow, icol) != '-':
+                continue
 
-    def findFirstEmptyPos():
-        for irow in range(len(st.matrix)):
-            for icol in range(len(st.matrix[irow])):
-                if st.matrix[irow][icol] == '-':
-                    return irow, icol
-    
-    def locateSlot(someRow, someCol):
-        # Определить направление слова
-        if st.charAt(someRow, someCol-1) == '-' or st.charAt(someRow, someCol+1) == '-':
-            dir = 'H'
-        elif st.charAt(someRow-1, someCol) == '-' or st.charAt(someRow+1, someCol) == '-':
-            dir = 'V'
+            # Проверить, не входит ли эта клетка в слот, определенный ранее
+            alreadyInSlot = False
+            for slot in slots:
+                if slot.inside(irow, icol):
+                    alreadyInSlot = True
+                    break
+            if alreadyInSlot:
+                icol += 1
+                continue
 
-        # Найти границы слова
-        startRow, startCol = someRow, someCol
-        while True:
+            # Определить направление слова
+            if st.charAt(irow, icol+1) == '-':
+                dir = 'H'
+            elif st.charAt(irow+1, icol) == '-':
+                dir = 'V'
+
+            # Найти начало слова
+            startRow, startCol = irow, icol
+            while True:
+                if dir == 'H': # Horiz
+                    if st.charAt(startRow, startCol-1) != '-':
+                        break
+                    else:
+                        startCol -= 1
+                else: # Vert
+                    if st.charAt(startRow-1, startCol) != '-':
+                        break
+                    else:
+                        startRow -= 1
+
+            # Найти конец слова
+            newSlot = WordSlot(startRow, startCol, dir)
+            endRow, endCol = newSlot.row, newSlot.col
+            while True:
+                if dir == 'H': # Horiz
+                    if st.charAt(endRow, endCol+1) != '-':
+                        break
+                    else:
+                        endCol += 1
+                else: # Vert
+                    if st.charAt(endRow+1, endCol) != '-':
+                        break
+                    else:
+                        endRow += 1
+
             if dir == 'H': # Horiz
-                if st.charAt(startRow, startCol-1) != '-':
-                    break
-                else:
-                    startCol -= 1
+                newSlot.len = endCol - newSlot.col + 1
             else: # Vert
-                if st.charAt(startRow-1, startCol) != '-':
-                    break
-                else:
-                    startRow -= 1
+                newSlot.len = endRow - newSlot.row + 1
 
-        slot = WordSlot(startRow, startCol, dir)
-        endRow, endCol = someRow, someCol
-        while True:
-            if dir == 'H': # Horiz
-                if st.charAt(endRow, endCol+1) != '-':
-                    break
-                else:
-                    endCol += 1
-            else: # Vert
-                if st.charAt(endRow+1, endCol) != '-':
-                    break
-                else:
-                    endRow += 1
+            slots.append(newSlot)
 
-        if dir == 'H': # Horiz
-            slot.len = endCol - startCol + 1
-        else: # Vert
-            slot.len = endRow - startRow + 1
-
-        slots.append(slot)
-
-        # Заполнить все позиции слова, кроме пересечений
-        cross = []
-        for ofs in range(slot.len):
-            curRow, curCol = slot.row, slot.col
-            if slot.dir == 'H': # Horiz
-                curCol += ofs
-            else: # Vert
-                curRow += ofs
-
-            # Является ли пересечением
-            emptyOnVert = (st.charAt(curRow-1, curCol) == '-' or st.charAt(curRow+1, curCol) == '-')
-            emptyOnHoriz = (st.charAt(curRow, curCol-1) == '-' or st.charAt(curRow, curCol+1) == '-')
-            if (slot.dir == 'H' and emptyOnVert) or (slot.dir == 'V' and emptyOnHoriz):
-                cross.append((curRow, curCol))
-            else:
-                st.matrix[curRow][curCol] = '?'
-
-        # Обработать слова на найденных пересечениях
-        for (row, col) in cross:
-            locateSlot(row, col)
-
-
-    emptyRow, emptyCol = findFirstEmptyPos()
-    locateSlot(emptyRow, emptyCol)
     return slots
 
 
@@ -202,6 +191,7 @@ def solveCrosswordPuzzle(crossword, words):
     init = State.fromList(crossword)
     init.availWords = words.split(';')
     init.wordSlots = findWordSlots(init.copy())
+    # init.print()
     solved = findWordForSlot(init)
     return solved.toList()
 
