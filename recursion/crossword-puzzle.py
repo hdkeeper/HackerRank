@@ -7,7 +7,6 @@ import re
 import sys
 from copy import deepcopy
 from pprint import pprint
-from collections import namedtuple
 
 
 class WordSlot:
@@ -19,8 +18,9 @@ class WordSlot:
         self.word = None
 
     def __repr__(self):
-        return 'WordSlot[row={} col={} dir={} len={}]'.format(
-            self.row, self.col, self.dir, self.len)
+        if self.word is not None:
+            return 'WordSlot[row={} col={} dir={} len={} word={}]'.format(self.row, self.col, self.dir, self.len, self.word)
+        return 'WordSlot[row={} col={} dir={} len={}]'.format(self.row, self.col, self.dir, self.len)
 
     def __eq__(self, other):
         return (self.row == other.row) and (self.col == other.col) and (self.dir == other.dir)
@@ -49,7 +49,7 @@ class State:
     def copy(self):
         s = State()
         s.matrix = deepcopy(self.matrix)
-        s.wordSlot = deepcopy(self.wordSlots)
+        s.wordSlots = deepcopy(self.wordSlots)
         s.availWords = deepcopy(self.availWords)
         return s
 
@@ -84,7 +84,7 @@ class State:
 
     def putWordIntoSlot(self, word, slot):
         st = self.copy()
-        slot = next(s for s in st.wordSlots if s == slot)
+        slot = next(s for s in st.wordSlots if slot == s)
         slot.word = word
         st.availWords.remove(word)
         for ofs in range(slot.len):
@@ -100,6 +100,7 @@ class State:
 
 def findWordSlots(st):
     slots = []
+    # TODO Переделать алгоритм
 
     def findFirstEmptyPos():
         for irow in range(len(st.matrix)):
@@ -177,30 +178,32 @@ def findWordSlots(st):
 
 
 def findWordForSlot(curState):
-    curState.print()
+    # curState.print()
+    if len(curState.availWords) == 0:
+        return curState
 
     # Находим первый незанятый слот
     slot = next(slot for slot in curState.wordSlots if slot.word is None)
+    
     # Перебираем слова подходящей длины
     for word in (w for w in curState.availWords if len(w) == slot.len):
         if curState.canWordBePutIntoSlot(word, slot):
-            nextState = curState.putWordIntoSlot(word, slot)
-            nextState.print()
-            
+            # Вписать это слово и продолжить поиск
+            nextState = findWordForSlot(curState.putWordIntoSlot(word, slot))
+            if nextState is not None:
+                return nextState
+
+    # Подходящих слов нет
+    return None
 
 
 # Complete the crosswordPuzzle function below.
-def crosswordPuzzle(crossword, words):
-    # TODO
-    st = State.fromList(crossword)
-    st.availWords = words.split(';')
-    st.wordSlots = findWordSlots(st.copy())
-    findWordForSlot(st)
-
-    # st.print()
-    return st.toList()
-
-
+def solveCrosswordPuzzle(crossword, words):
+    init = State.fromList(crossword)
+    init.availWords = words.split(';')
+    init.wordSlots = findWordSlots(init.copy())
+    solved = findWordForSlot(init)
+    return solved.toList()
 
 
 if __name__ == '__main__':
@@ -210,7 +213,5 @@ if __name__ == '__main__':
         crossword.append(crossword_item)
 
     words = input()
-
-    result = crosswordPuzzle(crossword, words)
-
+    result = solveCrosswordPuzzle(crossword, words)
     print('\n'.join(result))
