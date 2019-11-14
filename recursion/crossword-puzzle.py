@@ -10,7 +10,7 @@ from pprint import pprint
 
 
 class Vector:
-    def __init__(self, x, y):
+    def __init__(self, x=0, y=0):
         self.x = x
         self.y = y
 
@@ -134,7 +134,7 @@ class State:
 
 def findWordSlots(st):
     slots = []
-    pos = V(0, 0)
+    pos = V()
     for pos.y in range(len(st.matrix)):
         for pos.x in range(len(st.matrix[pos.y])):
             if st.charAt(pos) != '-':
