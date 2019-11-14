@@ -118,7 +118,6 @@ def findWordSlots(st):
                     alreadyInSlot = True
                     break
             if alreadyInSlot:
-                icol += 1
                 continue
 
             # Определить направление слова
