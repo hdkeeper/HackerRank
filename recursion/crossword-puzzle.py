@@ -9,27 +9,63 @@ from copy import deepcopy
 from pprint import pprint
 
 
+class Vector:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __repr__(self):
+        return '({},{})'.format(self.x, self.y)
+
+    def __eq__(self, other):
+        return (self.x == other.x) and (self.y == other.y)
+
+    def __add__(self, other):
+        return Vector(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other):
+        return Vector(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, n):
+        return Vector(self.x * n, self.y * n)
+
+    def asDir(self):
+        if self.x == 1 and self.y == 0:
+            return 'H'
+        elif self.x == 0 and self.y == 1:
+            return 'V'
+        raise RuntimeError('Invalid dir')
+    
+    def copy(self):
+        return Vector(self.x, self.y)
+
+V = Vector
+
+
 class WordSlot:
-    def __init__(self, row, col, dir, len=None):
-        self.row = row
-        self.col = col
+    def __init__(self, start, dir, len=None):
+        self.start = start
         self.dir = dir
         self.len = len
         self.word = None
 
     def __repr__(self):
         if self.word is not None:
-            return 'WordSlot[row={} col={} dir={} len={} word={}]'.format(self.row, self.col, self.dir, self.len, self.word)
-        return 'WordSlot[row={} col={} dir={} len={}]'.format(self.row, self.col, self.dir, self.len)
+            return 'WordSlot[start={} dir={} len={} word={}]'.format(self.start, self.dir.asDir(), self.len, self.word)
+        return 'WordSlot[start={} dir={} len={}]'.format(self.start, self.dir.asDir(), self.len)
 
     def __eq__(self, other):
-        return (self.row == other.row) and (self.col == other.col) and (self.dir == other.dir)
+        return (self.start == other.start) and (self.dir == other.dir)
 
-    def inside(self, row, col):
-        if self.dir == 'H': # Horiz
-            return (row == self.row) and (self.col <= col) and (col < self.col+self.len)
-        else: # Vert
-            return (col == self.col) and (self.row <= row) and (row < self.row+self.len)
+    @property
+    def finish(self):
+        return self.start + (self.dir * (self.len-1))
+
+    def inside(self, pos):
+        if self.dir.asDir() == 'H':
+            return (pos.y == self.start.y) and (self.start.x <= pos.x) and (pos.x <= self.finish.x)
+        else:
+            return (pos.x == self.start.x) and (self.start.y <= pos.y) and (pos.y <= self.finish.y)
 
 
 class State:
@@ -59,12 +95,12 @@ class State:
         s.availWords = deepcopy(self.availWords)
         return s
 
-    def charAt(self, row, col):
-        if row < 0 or row >= len(self.matrix):
+    def charAt(self, pos):
+        if pos.y < 0 or pos.y >= len(self.matrix):
             return '@'
-        if col < 0 or col >= len(self.matrix[row]):
+        if pos.x < 0 or pos.x >= len(self.matrix[pos.y]):
             return '@'
-        return self.matrix[row][col]
+        return self.matrix[pos.y][pos.x]
 
     def canWordBePutIntoSlot(self, word, slot):
         if word not in self.availWords:
@@ -76,16 +112,12 @@ class State:
         
         # Проверяем соответствие букв
         for ofs in range(slot.len):
-            row, col = slot.row, slot.col
-            if slot.dir == 'H': # Horiz
-                col += ofs
-            else: # Vert
-                row += ofs
-            if self.matrix[row][col] == '-':
+            pos = slot.start + (slot.dir * ofs)
+            if self.charAt(pos) == '-':
                 continue
-            if self.matrix[row][col] != word[ofs]:
+            if self.charAt(pos) != word[ofs]:
                 return False
-        
+       
         return True
 
     def putWordIntoSlot(self, word, slot):
@@ -94,71 +126,52 @@ class State:
         slot.word = word
         st.availWords.remove(word)
         for ofs in range(slot.len):
-            row, col = slot.row, slot.col
-            if slot.dir == 'H': # Horiz
-                col += ofs
-            else: # Vert
-                row += ofs
-            st.matrix[row][col] = word[ofs]
+            pos = slot.start + (slot.dir * ofs)
+            st.matrix[pos.y][pos.x] = word[ofs]
 
         return st
         
 
 def findWordSlots(st):
     slots = []
-    for irow in range(len(st.matrix)):
-        for icol in range(len(st.matrix[irow])):
-            if st.charAt(irow, icol) != '-':
+    pos = V(0, 0)
+    for pos.y in range(len(st.matrix)):
+        for pos.x in range(len(st.matrix[pos.y])):
+            if st.charAt(pos) != '-':
                 continue
 
             # Проверить, не входит ли эта клетка в слот, определенный ранее
             alreadyInSlot = False
             for slot in slots:
-                if slot.inside(irow, icol):
+                if slot.inside(pos):
                     alreadyInSlot = True
                     break
             if alreadyInSlot:
                 continue
 
             # Определить направление слова
-            if st.charAt(irow, icol+1) == '-':
-                dir = 'H'
-            elif st.charAt(irow+1, icol) == '-':
-                dir = 'V'
+            if st.charAt(pos + V(1,0)) == '-':
+                dir = V(1,0)
+            elif st.charAt(pos + V(0,1)) == '-':
+                dir = V(0,1)
 
             # Найти начало слова
-            startRow, startCol = irow, icol
+            start = pos
             while True:
-                if dir == 'H': # Horiz
-                    if st.charAt(startRow, startCol-1) != '-':
-                        break
-                    else:
-                        startCol -= 1
-                else: # Vert
-                    if st.charAt(startRow-1, startCol) != '-':
-                        break
-                    else:
-                        startRow -= 1
+                if st.charAt(start - dir) != '-':
+                    break
+                else:
+                    start = start - dir
 
             # Найти конец слова
-            newSlot = WordSlot(startRow, startCol, dir)
-            endRow, endCol = newSlot.row, newSlot.col
+            newSlot = WordSlot(start, dir, 1)
+            finish = start
             while True:
-                if dir == 'H': # Horiz
-                    if st.charAt(endRow, endCol+1) != '-':
-                        break
-                    else:
-                        endCol += 1
-                else: # Vert
-                    if st.charAt(endRow+1, endCol) != '-':
-                        break
-                    else:
-                        endRow += 1
-
-            if dir == 'H': # Horiz
-                newSlot.len = endCol - newSlot.col + 1
-            else: # Vert
-                newSlot.len = endRow - newSlot.row + 1
+                if st.charAt(finish + dir) != '-':
+                    break
+                else:
+                    finish = finish + dir
+                    newSlot.len += 1
 
             slots.append(newSlot)
 
