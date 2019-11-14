@@ -44,8 +44,8 @@ V = Vector
 
 class WordSlot:
     def __init__(self, start, dir, len=None):
-        self.start = start
-        self.dir = dir
+        self.start = start.copy()
+        self.dir = dir.copy()
         self.len = len
         self.word = None
 
@@ -161,7 +161,7 @@ def findWordSlots(st):
                 if st.charAt(start - dir) != '-':
                     break
                 else:
-                    start = start - dir
+                    start -= dir
 
             # Найти конец слова
             newSlot = WordSlot(start, dir, 1)
@@ -170,7 +170,7 @@ def findWordSlots(st):
                 if st.charAt(finish + dir) != '-':
                     break
                 else:
-                    finish = finish + dir
+                    finish += dir
                     newSlot.len += 1
 
             slots.append(newSlot)

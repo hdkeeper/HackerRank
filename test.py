@@ -29,8 +29,8 @@ class Vector:
         return Vector(self.x, self.y)
 
 
-v = Vector(0, 0)
-for v.y in range(5):
-    for v.x in range(5):
-        print(v)
+v = Vector(2, 2)
+v += Vector(0,1) * 10
+print(v)
+
 
