@@ -93,17 +93,14 @@ def lca(root, v1, v2):
 
 
 tree = BinarySearchTree()
-# t = int(input())
-t = 6
+t = int(input())
 
-# arr = list(map(int, input().split()))
-arr = list(map(int, ('4 2 3 1 7 6').split()))
+arr = list(map(int, input().split()))
 
 for i in range(t):
     tree.create(arr[i])
 
-# v = list(map(int, input().split()))
-v = list(map(int, ('1 7').split()))
+v = list(map(int, input().split()))
 
 ans = lca(tree.root, v[0], v[1])
 print(ans.info)
