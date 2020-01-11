@@ -47,49 +47,35 @@ class Node:
        // this is a node of the tree , which contains info as data, left , right
 '''
 
+def getPath(node, v):
+    if node.info == v:
+        return [node.info]
+    elif v < node.info and node.left:
+        return [node.info] + getPath(node.left, v)
+    elif v > node.info and node.right:
+        return [node.info] + getPath(node.right, v)
+    else:
+        raise Exception('Not found: %d' % v)
+
+def getNode(node, v):
+    if node.info == v:
+        return node
+    elif v < node.info and node.left:
+        return getNode(node.left, v)
+    elif v > node.info and node.right:
+        return getNode(node.right, v)
+    else:
+        raise Exception('Not found: %d' % v)
+
 def lca(root, v1, v2):
     # Enter your code here
-    def addParent(node):
-        if node.left:
-            node.left.parent = node
-            addParent(node.left)
-        if node.right:
-            node.right.parent = node
-            addParent(node.right)
+    path1 = getPath(root, v1)
+    path2 = getPath(root, v2)
+    for v in reversed(path2):
+        if v in path1:
+            return getNode(root, v)
 
-    def findNode(node, v):
-        if node.info == v:
-            return node
-        elif v < node.info and node.left:
-            return findNode(node.left, v)
-        elif v > node.info and node.right:
-            return findNode(node.right, v)
-        else:
-            raise Exception('Not found: %d' % v)
-
-    def traceUp(node, process):
-        process(node)
-        if node.parent:
-            traceUp(node.parent, process)        
-
-    root.parent = None
-    addParent(root)
-    path = []
-    resultNode = None
-
-    def buildPath(node):
-        path.append(node.info)
-
-    def checkPath(node):
-        nonlocal resultNode
-        if node.info in path and resultNode is None:
-            resultNode = node
-
-    traceUp(findNode(root, v1), buildPath)
-    traceUp(findNode(root, v2), checkPath)
-
-    return resultNode
-
+    return None
 
 
 tree = BinarySearchTree()
