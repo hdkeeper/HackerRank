@@ -1,11 +1,16 @@
-import re
+# Найди в строке и выведи в консоль первый не повторяющийся символ
+s = 'abracadabrax'
 
-s = "axc"
-t = "ahbgdc"
-sre = s[0]
-for i in range(1, len(s)):
-    sre += r'.*' + s[i]
+def getFirst(s: str) -> str:
+    cnt = {}
+    for c in s:
+        cnt[c] = cnt.get(c, 0) + 1
 
-print( re.search(sre, t) is not None )
+    for c in s:
+        if cnt[c] == 1:
+            return c
+        
+    return ''
 
+print(getFirst(s))
 
